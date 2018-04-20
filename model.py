@@ -5,7 +5,7 @@ def build_model(d_model):
     N = 6 # Number of stacked encoder/decoder layers
 
     #TODO: Add placeholder or Input layer
-    x = tf.placeholder()
+    x = tf.placeholder(tf.float32,shape=(10,13,512))
     
     #TODO: Add positional encoding
 
@@ -20,7 +20,7 @@ def build_model(d_model):
         x = layer_norm(resid2_out)
 
     # TODO: Add output (output so far) layer
-    y = tf.placeholder()
+    y = tf.placeholder(tf.float32,shape=(1,13,512))
 
     # Decoder (stacked N times)
     for i in range(N):
@@ -29,7 +29,7 @@ def build_model(d_model):
         norm1_out = layer_norm(resid1_out)
 
         enc_dec_attn = multihead_attention(norm1_out,x,x) #Use x (from encoder) as key's and values
-        resid2_out = resid1_out(norm1_out,enc_dec_attn)
+        resid2_out = residual_connection(norm1_out,enc_dec_attn)
         norm2_out = layer_norm(resid2_out)
 
         ppff_out = positionwise_feedforward(norm2_out)
@@ -37,3 +37,11 @@ def build_model(d_model):
         y = layer_norm(resid3_out)
 
     y_transform = tf.layers.dense(y,d_model)
+    print y_transform
+
+
+def main():
+    build_model(512)
+
+if __name__ == "__main__":
+    main()

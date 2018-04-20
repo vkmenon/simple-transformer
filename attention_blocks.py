@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+#TODO: FIX FOR BATCHING
 def attention(query,key,value, mask=False):
     '''
     Returns:
@@ -7,7 +8,7 @@ def attention(query,key,value, mask=False):
     '''
     score = tf.matmul(query,key,transpose_b=True)
     d_k = query.shape[-1]
-    scaled_score = score / d_k
+    scaled_score = tf.multiply(score, tf.constant(1/d_k.value,dtype=tf.float32))
     if mask:
         pass #TODO: Add mask function
     attn = tf.nn.softmax(scaled_score)
@@ -15,11 +16,12 @@ def attention(query,key,value, mask=False):
     
     return context
 
+#TODO: FIX FOR BATCHING
 def multihead_attention(query,key,value,heads=8):
     '''
     Q, K and V should be of format [Batch x Number of Words x Embedding Dimension]
     '''
-
+    #
     d_model = query.shape[-1] # Embedding Dimension
 
     # Apply a Linear transform to Q, K and V
@@ -29,9 +31,9 @@ def multihead_attention(query,key,value,heads=8):
 
     # Split up the Q, K and V vectors into separate 'heads'
     # Each element in the following lists has a value of [Batch x Num Words x d_model/heads]
-    Q_heads = tf.split(axis=-1,value=Q, num_split=heads)
-    V_heads = tf.split(axis=-1,value=K, num_split=heads)
-    K_heads = tf.split(axis=-1,value=V, num_split=heads)
+    Q_heads = tf.split(axis=-1,value=Q, num_or_size_splits=heads)
+    V_heads = tf.split(axis=-1,value=K, num_or_size_splits=heads)
+    K_heads = tf.split(axis=-1,value=V, num_or_size_splits=heads)
 
     # Compute Attention on each head separately
     context_heads = [attention(Q_heads[i],V_heads[i],K_heads[i]) for i in range(heads)]
@@ -61,6 +63,7 @@ def positionwise_feedforward(x):
     return x
 
 def layer_norm(x):
+    #TODO:
     return x
 
 def residual_connection(input_tensor,output_tensor):
