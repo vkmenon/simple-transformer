@@ -12,37 +12,37 @@ def attention(query,key,value, mask=False):
     if mask:
         pass #TODO: Add mask function
     attn = tf.nn.softmax(scaled_score)
+    #TODO: Dropout here
     context = tf.matmul(attn,value)
     
     return context
 
 #TODO: FIX FOR BATCHING
-def multihead_attention(query,key,value,heads=8):
+def multihead_attention(query,key,value,mask=False,heads=8):
     '''
     Q, K and V should be of format [Batch x Number of Words x Embedding Dimension]
     '''
-    #
-    d_model = query.shape[-1] # Embedding Dimension
+    d_model = query.get_shape().as_list()[-1] # Embedding Dimension
+    
+    assert d_model / heads == 0, 'Embedding dimensions must be divisble by number of heads'
 
-    # Apply a Linear transform to Q, K and V
-    Q = tf.layers.dense(query,d_model)
-    K = tf.layers.dense(key,d_model)
-    V = tf.layers.dense(value,d_model)
+    d_k = d_model / heads
 
-    # Split up the Q, K and V vectors into separate 'heads'
-    # Each element in the following lists has a value of [Batch x Num Words x d_model/heads]
-    Q_heads = tf.split(axis=-1,value=Q, num_or_size_splits=heads)
-    V_heads = tf.split(axis=-1,value=K, num_or_size_splits=heads)
-    K_heads = tf.split(axis=-1,value=V, num_or_size_splits=heads)
+    # Apply a Linear transform to Q, K and V and split up the Q, K and V vectors into separate 'heads'
+    # Each element in the following lists has a value of [Batch x Num Words x d_k]
+    Q_heads = multihead_linear(query,heads,d_k)
+    K_heads = multihead_linear(key,heads,d_k)
+    V_heads = multihead_linear(value,heads,d_k)
 
     # Compute Attention on each head separately
-    context_heads = [attention(Q_heads[i],V_heads[i],K_heads[i]) for i in range(heads)]
+    context_heads = [attention(Q_heads[i],V_heads[i],K_heads[i],mask=mask) for i in range(heads)]
 
     # Concatenate Attention results
     context = tf.concat(context_heads,axis=-1)
 
     # Apply a final Linear transform
     context_transform = tf.layers.dense(context,d_model)
+    #TODO: Dropout here
 
     return context_transform
 
@@ -61,6 +61,24 @@ def positionwise_feedforward(x):
     x = tf.keras.layers.Conv1D(filters=512,kernel_size=1,activation='linear')(x)
 
     return x
+
+def multihead_linear(x,num_heads,d_k):
+    '''
+    Create multiple linear projections of sequential data.
+
+    num_heads = Number of projections of the data
+    d_k = output dimension of each projection
+
+    Simple implementation:
+    projections = [tf.layers.dense(x,d_k) for i in range(num_heads)]
+
+    #TODO: 
+    Implement here as a Conv1D with kernel_size = 1 and depth = num_heads * d_k.
+    The output tensor of Conv1D is then split into (num_heads) tensors of depth d*k.
+    This allows for a single matmul which is probably more efficient.
+    '''
+    projections = [tf.layers.dense(x,d_k) for i in range(num_heads)]
+    return projections
 
 def layer_norm(x):
     #TODO:

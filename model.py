@@ -20,7 +20,7 @@ def build_model(d_model):
         x = layer_norm(resid2_out)
 
     # TODO: Add output (output so far) layer
-    y = tf.placeholder(tf.float32,shape=(1,13,512))
+    y = tf.placeholder(tf.float32,shape=(10,2,512))
 
     # Decoder (stacked N times)
     for i in range(N):
@@ -37,7 +37,6 @@ def build_model(d_model):
         y = layer_norm(resid3_out)
 
     y_transform = tf.layers.dense(y,d_model)
-    print y_transform
 
 
 def main():
