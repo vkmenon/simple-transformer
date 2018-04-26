@@ -7,8 +7,10 @@ I will also work on a script to compile a Keras compatible model for maximum eas
 
 ## Model Overview
 
-![Model Architecture](imgs/transformer_image.png?raw=true "Transformer")
- 
+<p align="center">
+  <img width="200" src="imgs/transformer_image.png">
+</p>
+
 
 ## TO DO:
 
